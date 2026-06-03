@@ -1,115 +1,51 @@
-//File not Found
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-//Konfiguracja Wifi
-const char* ssid = "autko2137";
-const char* password = "autko2137";
-// Serwer sieciowy
+//1
+const char* ssid = "JanRouterIIIŁączycielSieci";
+const char* password = "Innominepatris";
+
 ESP8266WebServer server(80);
-// Aktualny stan diody
-bool ledState = false;
-bool isServer1 = true;
-//
-String token = "ABC123";
-//
-bool checkToken() 
+
+//2
+IPAddress ip(172,16,54,100);
+IPAddress gateway(172,16,54,233);
+IPAddress subnet(255,255,255,0);
+
+void handleRoot()
 {
- return server.hasArg("token") && server.arg("token") == token;
+  server.send(200, "text/html", "<h1>MAIN SERVER</h1>");
 }
 
-void handleRoot() {
- const String postForms = "<html>\
- <head>\
- <title>TEST SERVER</title>\
- <style>\
- body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
- </style>\
- </head>\
- <body>\
- <h1>Sterowanie Diodą LED</h1>\
- <p>Wciśnij przycisk, aby zmienić stan diody LED.</p>\
- <button onclick=\"toggleLED()\">Zmień stan LED</button>\
- <script>\
- function toggleLED() {\
- fetch('/toggle')\
- .then(response => {\
- if (response.ok) {\
- alert('Zmieniono stan diody LED!');\
-} else {\
- alert('Wystąpił błąd!');\
- }\
- });\
- }\
- </script>\
- </body>\
- </html>";
- server.send(200, "text/html", postForms);
-}
-void handleNotFound() {
- String message = "File Not Found\n\n";
- server.send(404, "text/plain", message);
-}
-//
-void handleSetToken() {
- if (!server.hasArg("value")) {
- server.send(400, "text/plain", "Brak parametru value");
- return;
- }
- if(checkToken()) {
- token = server.arg("value");
- server.send(200, "text/plain", "Token ustawiony");
- }
-}
-void handleLED(){
-    if(ledState == false)
-    {
-      digitalWrite(LED_BUILTIN, LOW);
-      ledState = true;
-    }
-    else
-    {
-      digitalWrite(LED_BUILTIN, HIGH);
-      ledState = false;
-    }
-}
-//CHECK SERVER
-void checkServer()
+//3
+void handleHeartbeat()
 {
-  if(isServer1 == true)
+  server.send(200, "text/plain", "ALIVE");
+}
+
+void setup()
+{
+  Serial.begin(9600);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.config(ip, gateway, subnet);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print("Jestem Serverem");
-    server.begin();
-     server.on("/", handleRoot);
- server.onNotFound(handleNotFound);
- Serial.println("Serwer wystartował");
- server.on("/setToken", handleSetToken);
- server.on("/toggle", handleLED);
- digitalWrite(LED_BUILTIN, LOW);
-      ledState = true;
+    delay(500);
+    Serial.println("MAIN connecting...");
   }
-  
-  
+
+  server.on("/", handleRoot);
+  server.on("/heartbeat", handleHeartbeat);
+  server.begin();
+
+  Serial.println("MAIN READY");
 }
 
-void setup() {
- // Inicjalizacja WiFi
- WiFi.softAP(ssid, password);
- IPAddress IP = WiFi.softAPIP();
- //
- pinMode(LED_BUILTIN, OUTPUT);
- Serial.begin(9600); // Ustawiony baud rate
- Serial.println();
- Serial.print("Aplikacja dostępna pod adresem: ");
- Serial.println(IP);
- // Konfiguracja serwera
-checkServer();
- //jeżeli server2 == false dopiero odpal server1
- 
+void loop()
+{
+  server.handleClient();
 }
-void loop() {
- server.handleClient();
-}
-//Przykład wywołania: http://192.168.4.1/status?token=ABC123
-//Ustawienie tokenu: http://192.168.4.1/setToken?token=ABC123&value=NOWY
