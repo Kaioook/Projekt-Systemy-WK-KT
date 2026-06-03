@@ -2,13 +2,13 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-//1
+//1 Konfiguracja połączenia z siecią WiFi (router/hotspot)
 const char* ssid = "JanRouterIIIŁączycielSieci";
 const char* password = "Innominepatris";
 
 ESP8266WebServer server(80);
 
-//2
+//2 Konfiguracja adresacji sieciowej głównego serwer
 IPAddress ip(172,16,54,100);
 IPAddress gateway(172,16,54,233);
 IPAddress subnet(255,255,255,0);
@@ -18,7 +18,7 @@ void handleRoot()
   server.send(200, "text/html", "<h1>MAIN SERVER</h1>");
 }
 
-//3
+//3 Endpoint heartbeat wykorzystywany przez serwer BACKUP do sprawdzania czy serwer MAIN nadal dział
 void handleHeartbeat()
 {
   server.send(200, "text/plain", "ALIVE");

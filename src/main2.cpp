@@ -2,13 +2,15 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-//1
+//1 Konfiguracja połączenia z tą samą siecią WiFi co serwer MAIN
 const char* ssid = "JanRouterIIIŁączycielSieci";
 const char* password = "Innominepatris";
 
 ESP8266WebServer server(80);
 
-//2
+//2 Adresacja sieciowa:
+// vip - adres głównego serwera przejmowany po awarii MAIN
+// backup_ip - własny adres serwera BACKUP w trybie czuwania
 IPAddress vip(172,16,54,100);
 IPAddress backup_ip(172,16,54,101);
 IPAddress gateway(172,16,54,233);
@@ -25,7 +27,9 @@ void handleRoot()
               isMaster ? "<h1>BACKUP (MASTER)</h1>"
                        : "<h1>BACKUP (STANDBY)</h1>");
 }
-//3
+//3 Mechanizm komunikacji między usługami.
+// BACKUP wysyła zapytanie HTTP do MAIN i sprawdza
+// odpowiedź z endpointu /heartbeat.
 bool checkMain()
 {
   WiFiClient client;
@@ -46,7 +50,9 @@ bool checkMain()
   return false;
 }
 
-//4
+//4 Mechanizm failover.
+// Po wykryciu awarii MAIN serwer BACKUP przejmuje
+// adres IP głównej usługi i staje się aktywnym serwer
 void takeOver()
 {
   Serial.println("TAKEOVER MAIN IP");
@@ -65,7 +71,9 @@ void takeOver()
   isMaster = true;
 }
 
-//4
+//5 Mechanizm powrotu do trybu czuwania.
+// Gdy MAIN ponownie stanie się dostępny,
+// BACKUP oddaje rolę głównego serwera.
 void backToStandby()
 {
   Serial.println("BACK TO STANDBY");
